@@ -134,6 +134,16 @@ describe("MessageCompressor", () => {
         baz: "baz",
       })
 
+      expect(compressor.decompress('1[false,1["bar","baz","foo"],true]')).toEqual({
+        foo: true,
+        bar: false,
+        baz: {
+          foo: "foo",
+          bar: "bar",
+          baz: "baz",
+        },
+      })
+
       compressor.registerMessageType(["foo", "bar"])
       expect(compressor.decompress("2[false,true]")).toEqual({
         foo: true,
