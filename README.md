@@ -17,7 +17,7 @@ If they are running on multiple machines (e.g. client -> server), you'll have to
 import { MessageCompressor } from "ts-websocket-compressor"
 
 const serverCompressor = new MessageCompressor()
-const clientCompressor = new MessageCompressor()
+const clientCompressor = new MessageCompressor(false)
 
 serverCompressor.on("send-dictionary-updates-to-clients", (dictionary) => clientCompressor.handleDictionaryUpdates(dictionary))
 
