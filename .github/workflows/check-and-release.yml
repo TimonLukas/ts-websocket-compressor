@@ -1,4 +1,4 @@
-name: Typescript Library Starter
+name: Check and release
 
 on: [push]
 
