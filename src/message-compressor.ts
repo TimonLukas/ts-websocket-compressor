@@ -11,8 +11,8 @@ export class MessageCompressor {
   private ID_GENERAL_MESSAGE = 0;
 
   constructor(
-    private shouldEmitDictionaryUpdates: boolean,
-    private timeoutEmitQueueInMs = 1,
+    private shouldEmitDictionaryUpdates = true,
+    private timeoutEmitQueueInMs = 0,
   ) {}
 
   compress(message: Record<string, unknown>): string {
@@ -26,6 +26,17 @@ export class MessageCompressor {
   }
 
   private compressGeneralMessage(message: Record<string, unknown>): string {
+    if (!this.shouldEmitDictionaryUpdates) {
+      const messageKeys = Object.keys(message);
+
+      // If the client doesn't have IDs for all keys, just stringify the message as-is
+      if (
+        !messageKeys.every((key) => this.registeredGeneralKeysToIds.has(key))
+      ) {
+        return JSON.stringify(message);
+      }
+    }
+
     const compressedEntries = Object.entries(message)
       .map(([key, value]) => {
         const registeredId = this.registeredGeneralKeysToIds.get(key);
@@ -314,7 +325,7 @@ export class MessageCompressor {
 
   private emitSendDictionaryUpdatesToClients(): void {
     if (!this.shouldEmitDictionaryUpdates) {
-      return
+      return;
     }
 
     const registeredMessageTypes: Record<string, string[]> = mapToRecord(
@@ -333,7 +344,7 @@ export class MessageCompressor {
   private timeoutEmit: ReturnType<typeof setTimeout> | null = null;
   private queueEmitSendDictionaryUpdatesToClients(): void {
     if (!this.shouldEmitDictionaryUpdates) {
-      return
+      return;
     }
 
     if (this.timeoutEmit !== null) {

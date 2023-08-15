@@ -213,7 +213,7 @@ describe("MessageCompressor", () => {
   describe("end-to-end workflow with multiple compressors", () => {
     it("can correctly exchange dictionaries to compress with one compressor and decompress with another", async () => {
       const compressorIn = new MessageCompressor();
-      const compressorOut = new MessageCompressor();
+      const compressorOut = new MessageCompressor(false);
 
       compressorIn.on("send-dictionary-updates-to-clients", (dictionary) =>
         compressorOut.handleDictionaryUpdates(dictionary),
