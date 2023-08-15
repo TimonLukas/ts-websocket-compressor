@@ -10,7 +10,10 @@ export function joinKeys(keys: string[]): string {
 export class MessageCompressor {
   private ID_GENERAL_MESSAGE = 0;
 
-  constructor(private timeoutEmitQueueInMs = 1) {}
+  constructor(
+    private shouldEmitDictionaryUpdates: boolean,
+    private timeoutEmitQueueInMs = 1,
+  ) {}
 
   compress(message: Record<string, unknown>): string {
     const messageTypeId = this.getMessageTypeId(message);
@@ -310,6 +313,10 @@ export class MessageCompressor {
   }
 
   private emitSendDictionaryUpdatesToClients(): void {
+    if (!this.shouldEmitDictionaryUpdates) {
+      return
+    }
+
     const registeredMessageTypes: Record<string, string[]> = mapToRecord(
       this.registeredMessageTypes,
       setToArray,
@@ -325,6 +332,10 @@ export class MessageCompressor {
 
   private timeoutEmit: ReturnType<typeof setTimeout> | null = null;
   private queueEmitSendDictionaryUpdatesToClients(): void {
+    if (!this.shouldEmitDictionaryUpdates) {
+      return
+    }
+
     if (this.timeoutEmit !== null) {
       clearTimeout(this.timeoutEmit);
     }
