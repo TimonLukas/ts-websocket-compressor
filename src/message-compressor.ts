@@ -80,7 +80,7 @@ export class MessageCompressor {
 
     if (messageTypeId === -1) {
       throw new Error(
-        `MessageCompressor::uncompress got unexpected messageTypeId == -1, start of message: ${message.substring(
+        `MessageCompressor::decompress got unexpected messageTypeId == -1, start of message: ${message.substring(
           0,
           50,
         )}`,
@@ -159,7 +159,7 @@ export class MessageCompressor {
 
     if (typeof keysSet === "undefined") {
       throw new Error(
-        `MessageCompressor::uncompressRegisteredMessage(message, id) got unexpected id ${id}`,
+        `MessageCompressor::decompressRegisteredMessage(message, id) got unexpected id ${id}`,
       );
     }
 
