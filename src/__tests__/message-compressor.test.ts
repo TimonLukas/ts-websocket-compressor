@@ -108,8 +108,8 @@ describe("MessageCompressor", () => {
     });
   });
 
-  describe("uncompress(message)", () => {
-    it("can uncompress registered message types", () => {
+  describe("decompress(message)", () => {
+    it("can decompress registered message types", () => {
       const compressor = new MessageCompressor();
 
       compressor.registerMessageType(["foo", "bar", "baz"]);
@@ -135,7 +135,7 @@ describe("MessageCompressor", () => {
       });
     });
 
-    it("can uncompress general messages", () => {
+    it("can decompress general messages", () => {
       const compressor = new MessageCompressor();
 
       compressor.compress({ foo: true, bar: false, baz: null });
@@ -253,10 +253,10 @@ describe("MessageCompressor", () => {
 
       await sleep(2);
 
-      const uncompressedMessage1 = compressorOut.decompress(compressedMessage1);
-      expect(uncompressedMessage1).toEqual(message1);
-      const uncompressedMessage2 = compressorOut.decompress(compressedMessage2);
-      expect(uncompressedMessage2).toEqual(message2);
+      const decompressedMessage1 = compressorOut.decompress(compressedMessage1);
+      expect(decompressedMessage1).toEqual(message1);
+      const decompressedMessage2 = compressorOut.decompress(compressedMessage2);
+      expect(decompressedMessage2).toEqual(message2);
     });
   });
 });

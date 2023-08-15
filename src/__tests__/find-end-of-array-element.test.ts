@@ -42,7 +42,7 @@ describe("findEndOfArrayElement(haystack, arrayElementCharacterIndex)", () => {
       );
     });
 
-    it("doesn't get confused by parantheses nested in strings", () => {
+    it("doesn't get confused by parentheses nested in strings", () => {
       expect(findEndOfArrayElement('["[\\"foo\\"]"]', 1)).toEqual(12);
       expect('["[\\"foo\\"]"]'.substring(1, 12)).toEqual('"[\\"foo\\"]"');
 
