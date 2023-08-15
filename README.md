@@ -76,11 +76,11 @@ Without registered message types, the library will compress messages by replacin
     "bar": "bar",
     "baz": "baz"
   }
-}
+}  // 68 characters
 
 // turns into:
 
-0[0,true,1,false,2,0[0,"foo",1,"bar",2,"baz"]]
+0[0,true,1,false,2,0[0,"foo",1,"bar",2,"baz"]]  // 46 characters
 ```
 
 This format still has a bit of overhead since we need to store key IDs. If you register messages, you'll save this overhead:
@@ -102,7 +102,7 @@ const message = {
 }
 
 console.log(serverCompressor.compress(message))
-// 1[true,false,1["foo","bar","baz"]]
+// 1[true,false,1["foo","bar","baz"]]  // 34 characters <- almost half of original message!
 ```
 
 Each registered message will get a unique ID. General messages have ID 0.
