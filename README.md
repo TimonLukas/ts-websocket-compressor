@@ -1,79 +1,58 @@
-# TypeScript Library Starter
+# ts-websocket-compressor
 
-![NPM](https://img.shields.io/npm/l/@gjuchault/typescript-library-starter)
-![NPM](https://img.shields.io/npm/v/@gjuchault/typescript-library-starter)
-![GitHub Workflow Status](https://github.com/gjuchault/typescript-library-starter/actions/workflows/typescript-library-starter.yml/badge.svg?branch=main)
+This library compresses data sent over a WebSocket connection to improve throughput on devices that can't use compression for one reason or another.
 
-Yet another (opinionated) TypeScript library starter template.
+## Usage
 
-## Opinions and limitations
+This example assumes both compressors are running on the same machine, which is of course unrealistic.
+If they are running on multiple machines (e.g. client -> server), you'll have to transfer the messages yourself.
 
-1. Relies as much as possible on each included library's defaults
-2. Only relies on GitHub Actions
-3. Does not include documentation generation
+```typescript
+import { MessageCompressor } from "ts-websocket-compressor"
 
-## Getting started
+const serverCompressor = new MessageCompressor()
+const clientCompressor = new MessageCompressor()
 
-1. `npx degit gjuchault/typescript-library-starter my-project` or click on the `Use this template` button on GitHub!
-2. `cd my-project`
-3. `npm install`
-4. `git init` (if you used degit)
-5. `npm run setup`
+serverCompressor.on("send-dictionary-updates-to-clients", (dictionary) => clientCompressor.handleDictionaryUpdates(dictionary))
 
-To enable deployment, you will need to:
+const compressedMessage = serverCompressor.compress({
+    foo: true,
+    bar: false,
+    baz: {
+        foo: "foo",
+        bar: "bar",
+        baz: "baz",
+    },
+})
+console.log(compressedMessage)
+// 0[0,true,1,false,2,0[0,"foo",1,"bar",2,"baz"]]
 
-1. Set up the `NPM_TOKEN` secret in GitHub Actions ([Settings > Secrets > Actions](https://github.com/gjuchault/typescript-service-starter/settings/secrets/actions))
-2. Give `GITHUB_TOKEN` write permissions for GitHub releases ([Settings > Actions > General](https://github.com/gjuchault/typescript-service-starter/settings/actions) > Workflow permissions)
+// have to sleep for at least 1 millisecond since dictionary updates are queued per tick
+await sleep(1)
 
-## Features
+const uncompressedMessage = clientCompressor.decompress(compressedMessage)
+console.log(uncompressedMessage)
+// {
+//    "foo": true,
+//    "bar": false,
+//    "baz": {
+//      "foo": "foo",
+//      "bar": "bar",
+//      "baz": "baz"
+//    }
+```
 
-### Node.js, npm version
+### Connecting different compressors
 
-TypeScript Library Starter relies on [Volta](https://volta.sh/) to ensure the Node.js version is consistent across developers. It's also used in the GitHub workflow file.
+The server compressors should emit a message to all clients which describe the compression dictionaries:
 
-### TypeScript
+```typescript
+import { MessageCompressor } from "ts-websocket-compressor"
 
-Leverages [esbuild](https://github.com/evanw/esbuild) for blazing-fast builds but keeps `tsc` to generate `.d.ts` files.
-Generates a single ESM build.
+const serverCompressor = new MessageCompressor()
+const clientCompressor = new MessageCompressor()
 
-Commands:
+serverCompressor.on("send-dictionary-updates-to-clients", (dictionary) => clientCompressor.handleDictionaryUpdates(dictionary))
+```
 
-- `build`: runs type checking, then ESM and `d.ts` files in the `build/` directory
-- `clean`: removes the `build/` directory
-- `type:dts`: only generates `d.ts`
-- `type:check`: only runs type checking
-- `type:build`: only generates ESM
-
-### Tests
-
-TypeScript Library Starter uses [Vitest](https://vitest.dev/). Coverage is done through Vitest, using [c8](https://github.com/bcoe/c8).
-
-Commands:
-
-- `test`: runs Vitest test runner
-- `test:watch`: runs Vitest test runner in watch mode
-- `test:coverage`: runs Vitest test runner and generates coverage reports
-
-### Format & lint
-
-This template relies on the combination of [ESLint](https://github.com/eslint/eslint) — through [TypeScript-ESLint](https://github.com/typescript-eslint/typescript-eslint) for linting, and [Prettier](https://github.com/prettier/prettier) for formatting.
-It also uses [cspell](https://github.com/streetsidesoftware/cspell) to ensure correct spelling.
-
-Commands:
-
-- `format`: runs Prettier with automatic fixing
-- `format:check`: runs Prettier without automatic fixing (used in CI)
-- `lint`: runs ESLint with automatic fixing
-- `lint:check`: runs ESLint without automatic fixing (used in CI)
-- `spell:check`: runs spell checking
-
-### Releasing
-
-Under the hood, this library uses [semantic-release](https://github.com/semantic-release/semantic-release) and [Commitizen](https://github.com/commitizen/cz-cli).
-The goal is to avoid manual release processes. Using `semantic-release` will automatically create a GitHub release (hence tags) as well as an npm release.
-Based on your commit history, `semantic-release` will automatically create a patch, feature, or breaking release.
-
-Commands:
-
-- `cz`: interactive CLI that helps you generate a proper git commit message, using [Commitizen](https://github.com/commitizen/cz-cli)
-- `semantic-release`: triggers a release (used in CI)
+The dictionary can be stringified/parsed as-is.
