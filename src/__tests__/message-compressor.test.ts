@@ -24,6 +24,16 @@ describe("MessageCompressor", () => {
         }),
       ).toEqual('1["bar","baz","foo"]')
 
+      expect(compressor.compress({
+        foo: true,
+        bar: false,
+        baz: {
+          foo: "foo",
+          bar: "bar",
+          baz: "baz",
+        },
+      })).toEqual('1[false,1["bar","baz","foo"],true]')
+
       compressor.registerMessageType(["foo", "bar"])
       expect(
         compressor.compress({

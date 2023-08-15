@@ -72,13 +72,13 @@ export class MessageCompressor {
       const value = message[key]
 
       if (isRecord(value)) {
-        return this.compressGeneralMessage(value as Record<string, unknown>)
+        return this.compress(value as Record<string, unknown>)
       }
 
-      return value
+      return JSON.stringify(value)
     })
 
-    return `${id}${JSON.stringify(transformedMessage)}`
+    return `${id}[${transformedMessage.join(",")}]`
   }
 
   private REGEX_MATCH_MESSAGE_ID = /^(?<id>\d+)\[/
