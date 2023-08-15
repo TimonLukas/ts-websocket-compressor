@@ -2,6 +2,12 @@
 
 This library compresses data sent over a WebSocket connection to improve throughput on devices that can't use compression for one reason or another.
 
+## Installation
+
+```shell
+npm i ts-websocket-compressor
+```
+
 ## Usage
 
 This example assumes both compressors are running on the same machine, which is of course unrealistic.
@@ -56,3 +62,47 @@ serverCompressor.on("send-dictionary-updates-to-clients", (dictionary) => client
 ```
 
 The dictionary can be stringified/parsed as-is.
+
+### Register message types
+
+Without registered message types, the library will compress messages by replacing `objects with string keys` with `flat arrays with key IDs`:
+
+```json5
+{
+  "foo": true,
+  "bar": false,
+  "baz": {
+    "foo": "foo",
+    "bar": "bar",
+    "baz": "baz"
+  }
+}
+
+// turns into:
+
+0[0,true,1,false,2,0[0,"foo",1,"bar",2,"baz"]]
+```
+
+This format still has a bit of overhead since we need to store key IDs. If you register messages, you'll save this overhead:
+
+```typescript
+import { MessageCompressor } from "ts-websocket-compressor"
+
+const serverCompressor = new MessageCompressor()
+serverCompressor.registerMessageType(["foo", "bar", "baz"])
+
+const message = {
+    foo: true,
+    bar: false,
+    baz: {
+        foo: "foo",
+        bar: "bar",
+        baz: "baz",
+    },
+}
+
+console.log(serverCompressor.compress(message))
+// 1[true,false,1["foo","bar","baz"]]
+```
+
+Each registered message will get a unique ID. General messages have ID 0.
