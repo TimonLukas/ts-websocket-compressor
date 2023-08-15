@@ -106,3 +106,11 @@ console.log(serverCompressor.compress(message))
 ```
 
 Each registered message will get a unique ID. General messages have ID 0.
+
+### Queue timeout
+
+You can pass a queue timeout (in ms) as the second parameter to the `MessageCompressor` constructor:
+
+- if the timeout is greater than `0`, the dictionary will be exchanged after that many ms. Until this is done, messages are not compressed.
+- if the timeout equals `0`, the dictionary will be exchanged immediately after every change
+- 

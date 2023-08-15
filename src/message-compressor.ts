@@ -12,7 +12,7 @@ export class MessageCompressor {
 
   constructor(
     private shouldEmitDictionaryUpdates = true,
-    private timeoutEmitQueueInMs = 0,
+    private timeoutEmitQueueInMs = 1,
   ) {}
 
   compress(message: Record<string, unknown>): string {
@@ -37,7 +37,18 @@ export class MessageCompressor {
       }
     }
 
-    const compressedEntries = Object.entries(message)
+    const entries = Object.entries(message)
+
+    const missingKeys = entries.filter(([key]) => !this.registeredGeneralKeysToIds.has(key)).map(([key]) => key)
+    if (missingKeys.length > 0) {
+      missingKeys.forEach((key) => this.queueRegisterGeneralKey(key))
+
+      if (this.timeoutEmitQueueInMs > 0) {
+        return JSON.stringify(message)
+      }
+    }
+
+    const compressedEntries = entries
       .map(([key, value]) => {
         const registeredId = this.registeredGeneralKeysToIds.get(key)
         const compressedValue = isRecord(value)
@@ -45,8 +56,7 @@ export class MessageCompressor {
           : JSON.stringify(value)
 
         if (typeof registeredId === "undefined") {
-          const id = this.registerGeneralKey(key)
-          return [id, compressedValue]
+          throw new Error(`Expected all keys to be known, got undefined registeredId: ${registeredId}`)
         }
 
         return [registeredId, compressedValue]
@@ -241,6 +251,7 @@ export class MessageCompressor {
     return nextId
   }
 
+  private queueRegisteredGeneralKeys: string[] = []
   private registeredGeneralKeysToIds: Map<string, number> = new Map()
   private registeredIdsToGeneralKeys: Map<number, string> = new Map()
 
@@ -253,6 +264,15 @@ export class MessageCompressor {
     this.queueEmitSendDictionaryUpdatesToClients()
 
     return id
+  }
+
+  private queueRegisterGeneralKey(key: string): void {
+    if (this.timeoutEmitQueueInMs === 0) {
+      this.registerGeneralKey(key)
+      return
+    }
+
+    this.queueRegisteredGeneralKeys.push(key)
   }
 
   private nextGeneralKeyId = 0
@@ -328,6 +348,13 @@ export class MessageCompressor {
       return
     }
 
+    this.queueRegisteredGeneralKeys.forEach((missingKey) => {
+      if (!this.registeredGeneralKeysToIds.has(missingKey)) {
+        this.registerGeneralKey(missingKey)
+      }
+    })
+    this.queueRegisteredGeneralKeys = []
+
     const registeredMessageTypes: Record<string, string[]> = mapToRecord(
       this.registeredMessageTypes,
       setToArray,
@@ -349,6 +376,10 @@ export class MessageCompressor {
 
     if (this.timeoutEmit !== null) {
       clearTimeout(this.timeoutEmit)
+    }
+
+    if (this.timeoutEmitQueueInMs === 0) {
+      return this.emitSendDictionaryUpdatesToClients()
     }
 
     this.timeoutEmit = setTimeout(

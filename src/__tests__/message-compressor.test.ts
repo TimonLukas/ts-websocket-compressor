@@ -52,7 +52,7 @@ describe("MessageCompressor", () => {
     })
 
     it("can compress general messages", () => {
-      const compressor = new MessageCompressor()
+      const compressor = new MessageCompressor(true, 0)
 
       expect(
         compressor.compress({
@@ -64,7 +64,7 @@ describe("MessageCompressor", () => {
     })
 
     it("keeps previously-seen general keys with the same ID", () => {
-      const compressor = new MessageCompressor()
+      const compressor = new MessageCompressor(true, 0)
 
       compressor.compress({
         foo: true,
@@ -160,7 +160,7 @@ describe("MessageCompressor", () => {
     })
 
     it("can decompress general messages", () => {
-      const compressor = new MessageCompressor()
+      const compressor = new MessageCompressor(true, 0)
 
       compressor.compress({ foo: true, bar: false, baz: null })
       expect(compressor.decompress("0[0,true,1,false,2,null]")).toEqual({
@@ -236,7 +236,7 @@ describe("MessageCompressor", () => {
 
   describe("end-to-end workflow with multiple compressors", () => {
     it("can correctly exchange dictionaries to compress with one compressor and decompress with another", async () => {
-      const compressorIn = new MessageCompressor()
+      const compressorIn = new MessageCompressor(true, 0)
       const compressorOut = new MessageCompressor(false)
 
       compressorIn.on("send-dictionary-updates-to-clients", (dictionary) =>
@@ -282,5 +282,51 @@ describe("MessageCompressor", () => {
       const decompressedMessage2 = compressorOut.decompress(compressedMessage2)
       expect(decompressedMessage2).toEqual(message2)
     })
+  })
+
+  it("doesn't encode general keys if the update hasn't been emitted yet", () => {
+    const compressorIn = new MessageCompressor(true, 0)
+    const compressorOut = new MessageCompressor(false)
+
+    compressorIn.on("send-dictionary-updates-to-clients", (dictionary) =>
+        compressorOut.handleDictionaryUpdates(dictionary),
+    )
+
+    const message1 = {
+      foo: true,
+      bar: false,
+      baz: [
+        {
+          foo: true,
+          bar: false,
+          baz: {
+            foo: [true, false],
+            bar: [false, true],
+            baz: [null, { null: null }],
+          },
+        },
+      ],
+    }
+    const message2 = {
+      foo: true,
+      bar: false,
+      baz: {
+        foo: true,
+        bar: false,
+        baz: {
+          foo: [true, false],
+          bar: [false, true],
+          baz: [null, { null: null }],
+        },
+      },
+    }
+
+    const compressedMessage1 = compressorIn.compress(message1)
+    const compressedMessage2 = compressorIn.compress(message2)
+
+    const decompressedMessage1 = compressorOut.decompress(compressedMessage1)
+    expect(decompressedMessage1).toEqual(message1)
+    const decompressedMessage2 = compressorOut.decompress(compressedMessage2)
+    expect(decompressedMessage2).toEqual(message2)
   })
 })
