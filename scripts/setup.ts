@@ -17,7 +17,7 @@ const contributingPath = path.join(rootPath, "CONTRIBUTING.md");
 const scriptsPath = path.join(rootPath, "scripts/");
 const workflowPath = path.join(
   rootPath,
-  ".github/workflows/typescript-library-starter.yml",
+  ".github/workflows/check-and-release.yml",
 );
 const issueConfigPath = path.join(
   rootPath,
