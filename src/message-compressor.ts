@@ -1,5 +1,5 @@
 import { findArrayElementIndices } from "./find-array-element-indices.js";
-import { mapToRecord, setToArray } from "./util.js"
+import {isRecord, mapToRecord, setToArray} from "./util.js"
 
 type StopHandle = () => void
 
@@ -25,15 +25,16 @@ export class MessageCompressor {
     private compressGeneralMessage(message: Record<string, unknown>): string {
         const compressedEntries = Object.entries(message).map(([key, value]) => {
             const registeredId = this.registeredGeneralKeysToIds.get(key)
+            const compressedValue = isRecord(value) ? this.compressGeneralMessage(value as Record<string, unknown>) : JSON.stringify(value)
 
             if (typeof registeredId === "undefined") {
                 const id = this.registerGeneralKey(key)
-                return [id, value]
+                return [id, compressedValue]
             }
 
-            return [registeredId, value]
+            return [registeredId, compressedValue]
         }).flat(1)
-        return `0${JSON.stringify(compressedEntries)}`
+        return `0[${compressedEntries.join(',')}]`
     }
 
     private compressRegisteredMessage(message: Record<string, unknown>, id: number): string {
@@ -47,7 +48,7 @@ export class MessageCompressor {
         const transformedMessage = keys.map((key) => {
             const value = message[key]
 
-            if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+            if (isRecord(value)) {
                 return this.compressGeneralMessage(value as Record<string, unknown>)
             }
 
@@ -112,8 +113,7 @@ export class MessageCompressor {
                 throw new Error(`MessageCompressor::decompressGeneralMessage(message) => couldn't find key with ID ${keyId} in dictionary`)
             }
 
-            const value = message.substring(valueStart, valueEnd)
-
+            const value = message.substring(valueStart, valueEnd).trim()
             const decompressedValue = this.decompress(value)
 
             if (decompressedValue === null) {
@@ -121,7 +121,7 @@ export class MessageCompressor {
                 continue
             }
 
-            decompressedMessage.push([key, decompressedMessage])
+            decompressedMessage.push([key, decompressedValue])
         }
 
         return Object.fromEntries(decompressedMessage) as Record<string, unknown>

@@ -55,6 +55,34 @@ describe("MessageCompressor", () => {
                 bar: false,
                 baz: null
             })).toEqual("0[0,true,1,false,2,null]")
+
+            expect(compressor.compress({
+                foo: true,
+                bar: false,
+                baz: [{
+                    foo: true,
+                    bar: false,
+                    baz: {
+                        foo: [true, false],
+                        bar: [false, true],
+                        baz: [null, { null: null }]
+                    }
+                }]
+            })).toEqual("0[0,true,1,false,2,[{\"foo\":true,\"bar\":false,\"baz\":{\"foo\":[true,false],\"bar\":[false,true],\"baz\":[null,{\"null\":null}]}}]]")
+
+            expect(compressor.compress({
+                foo: true,
+                bar: false,
+                baz: {
+                    foo: true,
+                    bar: false,
+                    baz: {
+                        foo: [true, false],
+                        bar: [false, true],
+                        baz: [null, { null: null }]
+                    }
+                }
+            })).toEqual("0[0,true,1,false,2,0[0,true,1,false,2,0[0,[true,false],1,[false,true],2,[null,{\"null\":null}]]]]")
         })
     })
 
@@ -158,7 +186,7 @@ describe("MessageCompressor", () => {
 
             compressorIn.on("send-dictionary-updates-to-clients", (dictionary) => compressorOut.handleDictionaryUpdates(dictionary))
 
-            const message = {
+            const message1 = {
                 foo: true,
                 bar: false,
                 baz: [{
@@ -171,13 +199,29 @@ describe("MessageCompressor", () => {
                     }
                 }]
             }
+            const message2 = {
+                foo: true,
+                bar: false,
+                baz: {
+                    foo: true,
+                    bar: false,
+                    baz: {
+                        foo: [true, false],
+                        bar: [false, true],
+                        baz: [null, { null: null }]
+                    }
+                }
+            }
 
-            const compressedMessage = compressorIn.compress(message)
+            const compressedMessage1 = compressorIn.compress(message1)
+            const compressedMessage2 = compressorIn.compress(message2)
 
             await sleep(2)
 
-            const uncompressedMessage = compressorOut.decompress(compressedMessage)
-            expect(uncompressedMessage).toEqual(message)
+            const uncompressedMessage1 = compressorOut.decompress(compressedMessage1)
+            expect(uncompressedMessage1).toEqual(message1)
+            const uncompressedMessage2 = compressorOut.decompress(compressedMessage2)
+            expect(uncompressedMessage2).toEqual(message2)
         })
     })
 })

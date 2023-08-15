@@ -23,3 +23,7 @@ export function setToArray<T>(set: Set<T>): T[] {
 export function sleep(timeInMs: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, timeInMs))
 }
+
+export function isRecord(value: unknown): boolean {
+    return typeof value === "object" && value !== null && !Array.isArray(value)
+}
