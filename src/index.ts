@@ -1,1 +1,1 @@
-export { MessageCompressor } from "./message-compressor.js"
+export { MessageCompressor } from "./message-compressor.js";
