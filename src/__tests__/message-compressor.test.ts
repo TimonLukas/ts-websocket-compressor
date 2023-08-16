@@ -289,7 +289,7 @@ describe("MessageCompressor", () => {
     const compressorOut = new MessageCompressor(false)
 
     compressorIn.on("send-dictionary-updates-to-clients", (dictionary) =>
-        compressorOut.handleDictionaryUpdates(dictionary),
+      compressorOut.handleDictionaryUpdates(dictionary),
     )
 
     const message1 = {

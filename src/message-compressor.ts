@@ -39,7 +39,9 @@ export class MessageCompressor {
 
     const entries = Object.entries(message)
 
-    const missingKeys = entries.filter(([key]) => !this.registeredGeneralKeysToIds.has(key)).map(([key]) => key)
+    const missingKeys = entries
+      .filter(([key]) => !this.registeredGeneralKeysToIds.has(key))
+      .map(([key]) => key)
     if (missingKeys.length > 0) {
       missingKeys.forEach((key) => this.queueRegisterGeneralKey(key))
 
@@ -56,7 +58,9 @@ export class MessageCompressor {
           : JSON.stringify(value)
 
         if (typeof registeredId === "undefined") {
-          throw new Error(`Expected all keys to be known, got undefined registeredId: ${registeredId}`)
+          throw new Error(
+            `Expected all keys to be known, got undefined registeredId: ${registeredId}`,
+          )
         }
 
         return [registeredId, compressedValue]
